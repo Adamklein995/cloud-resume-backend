@@ -1,0 +1,15 @@
+# force new commit
+name: Deploy Azure Function
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo test
+        run: echo "Workflow trigger OK"
