@@ -1,4 +1,4 @@
-name: Deploy Azure Function App
+name: Deploy Azure Function (Node.js)
 
 on:
   push:
@@ -6,35 +6,31 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  AZURE_FUNCTIONAPP_NAME: mycvapi
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'
-  PYTHON_VERSION: '3.10'
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
       - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to Azure Function App
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Zip function app
-        run: zip -r functionapp.zip .
-
-      - name: Deploy to Azure Functions
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: functionapp.zip
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          zip -r functionapp.zip .
+          az functionapp deployment source config-zip \
+            --name mycvapi \
+            --resource-group cloudresume \
+            --src functionapp.zip
